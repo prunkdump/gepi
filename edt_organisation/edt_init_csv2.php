@@ -109,6 +109,7 @@ function cherche_udt_ligne($nom_regroup) {
 $action = isset($_POST["action"]) ? $_POST["action"] : null;
 $csv_file = isset($_FILES["csv_file"]) ? $_FILES["csv_file"] : null;
 $truncate_cours = isset($_POST["truncate_cours"]) ? $_POST["truncate_cours"] : null;
+$reload_export = isset($_POST["reload_export"]) ? $_POST["reload_export"] : null;
 $aff_infos = isset($_POST["aff_infos"]) ? $_POST["aff_infos"] : null;
 $recommencer = isset($_POST["recommencer"]) ? $_POST["recommencer"] : null;
 $module_gr = isset($_POST["module_gr"]) ? $_POST["module_gr"] : NULL;
@@ -116,6 +117,8 @@ $etape = null;
 $aff_etape = null;
 $exist = NULL;
 $msg_gr = NULL;
+
+
 
 // On récupère le répertoire temporaire de l'admin
 $tempdir = get_user_temp_directory();
@@ -153,6 +156,21 @@ if (getSettingValue('mod_edt_gr') == "y") {
 }
 */
 
+
+//Si l'utilisateur veut recharger le fichier d'export on le fait avant les étapes suivantes 
+if($reload_export == 'oui' AND file_exists("../temp/".$tempdir."/g_edt_2.csv" )){
+  // On efface le fichier
+  unlink("../temp/".$tempdir."/g_edt_2.csv");
+  $_SESSION["explications"] = "oui";
+}
+
+
+//Si l'utilisateur veut effacer les cours déjà créés
+if ($truncate_cours == "oui") {
+  $vider_table = mysql_query("TRUNCATE TABLE edt_cours");
+}
+
+
 // Si l'utilisateur veut recommencer, on efface toutes les entrées de l'étape qu'il a demandée
 if ($recommencer != 'non' AND is_numeric($recommencer)) {
 
@@ -163,28 +181,19 @@ if ($recommencer != 'non' AND is_numeric($recommencer)) {
     	unlink("../temp/".$tempdir."/g_edt_2.csv");
     	$_SESSION["explications"] = "oui";
     }
-
-    $supprimer = mysql_query("DELETE FROM edt_init WHERE ident_export >= '" . $recommencer . "' AND ident_export != 'fichierTexte2'")
+    $supprimer = mysql_query("DELETE FROM edt_init WHERE ident_export >= " . $recommencer . " AND ident_export != 'fichierTexte2'")
     OR trigger_error('Erreur, La table edt_init n\'a pas été mise à jour : ' . mysql_error(), E_USER_ERROR);
-    $modifier = mysql_query("UPDATE edt_init SET nom_export = '" . $recommencer . "' WHERE ident_export = 'fichierTexte2'")
+
+    //!!! pour n epas recommencer a une étape ultérieure à l'étape actuelle
+    $modifier = mysql_query("UPDATE edt_init SET nom_export = " . $recommencer . " WHERE ident_export = 'fichierTexte2' AND  nom_export > ".$recommencer." ")
     OR trigger_error('Erreur dans le retour en arrière : ' . mysql_error(), E_USER_ERROR);
-
-	// On vérifie que la demande d'effacement des cours précédents soit bien cochée
-	if ($truncate_cours == "oui") {
-		$vider_table = mysql_query("TRUNCATE TABLE edt_cours");
-    }
-
-}elseif($recommencer == 'non' AND is_numeric($recommencer)){
-
-	// On vérifie que la demande d'effacement des cours précédents soit bien cochée
-	if ($truncate_cours == "oui") {
-		$vider_table = mysql_query("TRUNCATE TABLE edt_cours");
-    }
+	
 
 }
 
 
 // On garde en mémoire les deux coches pour effacer la table de cours et afficher les informations quand on enregistre les cours
+/*
 $referer = explode("/", $_SERVER['HTTP_REFERER']);
 if ($aff_infos == "oui" OR ($referer[5] == "edt_init_concordance2.php" AND $_SESSION["afficher_infos"] == ' checked="checked"')) {
     $_SESSION["afficher_infos"] = ' checked="checked"';
@@ -196,6 +205,7 @@ if ($truncate_cours == "oui" OR ($referer[5] == "edt_init_concordance2.php" AND 
 } else {
     $_SESSION["effacer_cours"] = '';
 }
+*/
 
 
 // On teste d'abord pour savoir à quelle étape on est
@@ -261,12 +271,8 @@ if ($action == "upload_file") {
         if (!$fp) {
             // Prob sur l'ouverture du fichier
             echo "<p>Impossible d'ouvrir le fichier CSV !</p>";
-            echo "<p><a href=\"./edt_init_csv.php\">Cliquer ici </a> pour recommencer !</center></p>";
+            echo "<p><a href=\"./edt_init_csv2.php\">Cliquer ici </a> pour recommencer !</center></p>";
         } else {
-            // A partir de là, on vide la table edt_cours
-            if ($truncate_cours == "oui") {
-                $vider_table = mysql_query("TRUNCATE TABLE edt_cours");
-            }
             // On ouvre alors toutes les lignes de tous les champs
             $tableau = array();
             // On affiche le tire pour chaque étape
@@ -291,24 +297,60 @@ if ($action == "upload_file") {
 			
             echo '<p>' . $titre[$etape] . '</p>';
             if ($etape != 12) {
-            	$aff_enregistrer = 'Enregistrer ces concordances';
-                while ($tab = fgetcsv($fp, 1024, ";")) {
+                $aff_enregistrer = 'Enregistrer ces concordances';
+                
+                //!!! pour les regroupement il faut ajouter la matiere 
+                //!!! en début de valeurs 
+                if($etape != 7){
+                      while ($tab = fgetcsv($fp, 1024, ";")) {
 					/*
 					echo "<pre>";
 					echo print_r($tab);
 					echo "</pre>";
 					*/
-                    if (in_array($tab[$etape], $tableau) === false) {
-                        // Puisque la valeur du champ n'est pas encore dans $tableau, on l'insère pour éviter les doublons
-                        if ($tab[$etape] != '') {
-                            $tableau[] = $tab[$etape];
+                          if (in_array($tab[$etape], $tableau) === false) {
+                              // Puisque la valeur du champ n'est pas encore dans $tableau, on l'insère pour éviter les doublons
+                              if ($tab[$etape] != '') {
+                                  $tableau[] = $tab[$etape];
 
 							if($tab[3]!="") {
 								$tab_matiere[remplace_accents($tab[$etape], 'all_nospace')]=$tab[3];
 							}
-                        }
-                    }
+                              }
+                          }
+                      }
+                } else {
+                      while ($tab = fgetcsv($fp, 1024, ";")) {
+					/*
+					echo "<pre>";
+					echo print_r($tab);
+					echo "</pre>";
+		
+         			        */
+                          //on insère la matière en début de valeur 
+                          $matiere_exp = remplace_accents($tab[3], 'all_nospace');
+                          $matiere = renvoiConcordances($matiere_exp, 3);
+                          if($matiere == 'inc' OR $matiere == 'erreur'){
+                                   $matiere = '';
+                          }
+                          $groupe_exp = remplace_accents($tab[7], 'all_nospace');
+                          $groupe = $matiere.'_'.$groupe_exp;
+                    
+                          if (in_array($groupe, $tableau) === false) {
+                              // Puisque la valeur du champ n'est pas encore dans $tableau, on l'insère pour éviter les doublons
+                              if ($groupe_exp != '') {
+                                 $tableau[] = $groupe;
+
+							if($tab[3]!="") {
+								$tab_matiere[remplace_accents($tab[$etape], 'all_nospace')]=$tab[3];
+							}
+                             }
+                          }
+                      }
                 }
+      
+          
+
                 // On range les infos du tableau dans l'ordre alphabétique
                 asort($tableau);
 
@@ -322,9 +364,9 @@ if ($action == "upload_file") {
 				$alt=1;
 				foreach ($tableau as $key => $val) {
 					$alt=$alt*(-1);
-                	// On enlève les guillemets et les apostrophes et les accents
-                	//$valeur = my_ereg_replace("'", "wkzx", my_ereg_replace('"', "zxwk", $val));
-                	$valeur = remplace_accents($val, 'all_nospace');
+                       	// On enlève les guillemets et les apostrophes et les accents
+                        //$valeur = my_ereg_replace("'", "wkzx", my_ereg_replace('"', "zxwk", $val));
+			                $valeur = remplace_accents($val, 'all_nospace');
 					//echo "<p>";
 					echo "<tr";
 					echo " class='lig$alt'";
@@ -381,7 +423,7 @@ if ($action == "upload_file") {
 						if($udt_ligne=="") {$udt_ligne=cherche_udt_ligne($valeur);}
 						echo " <span style='font-size:x-small'>".$udt_ligne."</span>";
 					}
-
+          
 
                     //echo '</p>';
                     echo "</td>\n";
@@ -457,6 +499,8 @@ if ($action == "upload_file") {
 }
 echo '</div>'; // fin du div id="DivCsv2"
 
+
+
 if (isset($_SESSION["explications"]) AND $_SESSION["explications"] == "non") {
     echo '<div style="display: none;">';
 }
@@ -505,7 +549,7 @@ la derni&egrave;re sera la plus longue. Par contre, les 11 premi&egrave;res &eac
 
 			<p>
 			<label for="affInfosEdt">Afficher l'enregistrement de tous les cours</label>
-			<input type="checkbox" id="affInfosEdT" name="aff_infos" value="oui"<?php echo $_SESSION["afficher_infos"]; ?> /></p>
+			<input type="checkbox" id="affInfosEdT" name="aff_infos" value="oui" /></p>
 
 			<p><input type="file" size="80" name="csv_file" /></p>
 			<p><input type="submit" value="Valider" /></p>
@@ -516,7 +560,25 @@ if (isset($_SESSION["explications"]) AND $_SESSION["explications"] == "non") {
 }
 
 ?>
+
+
+<?php
+/*******************************/
+/* Initialisation des groupes  */
+/*******************************/
+if($etape == 12){
+  echo '<br /> ';
+  echo '<div id="divCsv2">';
+  echo '<h3>Initialiser les groupes de Gepi &agrave; partir d\'un export csv d\'un logiciel propri&eacute;taire.</h3>';
+  echo '<p> <b>Si initialisation de l\'emplois du temps s\'est correctement d&eacute;roul&eacute;</b> vous pouvez maintenant';
+  echo ' initialiser les groupes &agrave; l\'aide d\'un nouvel export de UDtemps. </p>';
+  echo '<p> -> <a href="./edt_init_groupe_csv2.php" >Initialisation des groupes.</a> </p>';
+  
+}
+?>
+
 <br /><br />
+
 
 	<!--div class="mode_gr">
 	<p>Voulez-vous que Gepi cr&eacute;e tous les cours qu'il ne reconnait pas ?</p>
@@ -538,9 +600,11 @@ if (isset($_SESSION["explications"]) AND $_SESSION["explications"] == "non") {
 
 		<form name="refaire" action="edt_init_csv2.php" method="post">
 
-			<p style="font-weight: bold;" title="Cochez pour effacer tous les cours (mais pas les concordances)">
+			<p style="font-weight: bold;" title="Cochez pour effacer tous les cours ou le fichier d'export (mais pas les concordances)">
 			<label for="truncateCours">Effacer les cours d&eacute;j&agrave; cr&eacute;&eacute;s </label>
-			<input type="checkbox" id="truncateCours" name="truncate_cours" value="oui"<?php echo $_SESSION["effacer_cours"]; ?> />
+			<input type="checkbox" id="truncateCours" name="truncate_cours" value="oui" /> </br>
+                        <label for="reloadExport">Recharger le ficher d'export</label>
+                        <input type="checkbox" id="reloadExport" name="reload_export" value="oui" />
 			&nbsp;&nbsp;<input type="submit" name="recommencer2" value="Recommencer" />
 			</p>
 

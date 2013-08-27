@@ -226,10 +226,54 @@ if ($etape != NULL) {
 			<p style="color: green;">Le fichier est conservé dans le répertoire de l\'administrateur.</p>';
 		}
 
+
+		/************************************/
+		/* fusion des cours qui se suivents */
+		/************************************/
+
+		// on sélectionne les cours qui se suivent
+		$sqlreq = "SELECT edta.id_cours AS base_id, edtb.id_cours AS next_id
+                           FROM edt_cours edta, edt_cours edtb
+                           WHERE edta.id_groupe = edtb.id_groupe AND edta.id_aid = edtb.id_aid 
+                                 AND edta.id_salle = edtb.id_salle AND edta.jour_semaine = edtb.jour_semaine 
+                                 AND edta.id_semaine = edtb.id_semaine AND edta.login_prof = edtb.login_prof
+                                 AND edta.id_definie_periode+edta.heuredeb_dec+(0.5*edta.duree) = edtb.id_definie_periode + edtb.heuredeb_dec
+                                 ORDER BY edta.id_definie_periode+edta.heuredeb_dec;";
+
+		$sqlres = mysql_query($sqlreq) OR DIE('erreur dans la requête '.$sqlreq.' : '.mysql_error());
+		
+		// on fusionne les deux cours dans le second
+		while( $sqltab = mysql_fetch_array($sqlres) ){
+		  
+		  //on agrandis le second cours pour qu'il englobe le premier
+		  $fusion_id = $sqltab['next_id'];
+		  $fusion_delete = $sqltab['base_id'];
+		  
+		  $fusionreq = "UPDATE edt_cours AS edtf, edt_cours AS edtd 
+                                SET edtf.id_definie_periode = edtd.id_definie_periode,
+                                    edtf.duree = edtf.duree + edtd.duree,
+                                    edtf.heuredeb_dec = edtd.heuredeb_dec
+                                WHERE edtf.id_cours = '".$fusion_id."' AND edtd.id_cours = '".$fusion_delete."' ;";
+      
+		  $fusionres = mysql_query($fusionreq) OR DIE('erreur dans la requête '.$fusionreq.' : '.mysql_error());
+
+		  //on efface le premier cours
+		  $deletereq = "DELETE FROM edt_cours WHERE id_cours = '".$fusion_delete."' ;";
+
+		  $deleteres = mysql_query($deletereq) OR DIE('erreur dans la requête '.$deletereq.' : '.mysql_error());
+		}
+		  
+
+
 		// On affiche un lien pour revenir à la page de départ
 		echo '
 		<a href="edt_init_csv2.php" style="border: 1px solid black;">Retour</a>';
 	}
+
+
+	
+
+
 } // on a terminé le travail de concordances
 
 require("../lib/footer.inc.php");
