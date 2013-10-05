@@ -323,7 +323,8 @@ function renvoiIdGroupe($prof, $classe_txt, $matiere_txt, $grp_txt, $partie_txt,
 		//ou si le groupe est la matière 
 	        //on essaye d'utiliser la MATIERE comme nom de groupe
 		//comme nom de groupe
-		if($partie_txt == '' OR $partie_txt == $matiere_txt){
+		$partie_gepi = renvoiConcordances($partie_txt, 3);
+		if($partie_txt == '' OR $partie_gepi == $matiere_txt){
 		  
 		  //on fait la requette avec le nom de la matière
 		  $req_groupe = mysql_query("SELECT jgp.id_groupe FROM j_groupes_professeurs jgp, j_groupes_classes jgc, j_groupes_matieres jgm, groupes grp WHERE
