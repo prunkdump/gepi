@@ -58,11 +58,11 @@ $reg_professeurs = (array)$current_group["profs"]["list"];
 
 //================================
 $invisibilite_groupe=array();
-$sql="SELECT jgv.* FROM j_groupes_visibilite jgv WHERE jgv.visible='n';";
+$sql="SELECT jgv.* FROM j_groupes_visibilite jgv WHERE id_groupe='$id_groupe' AND jgv.visible='n';";
 $res_jgv=mysql_query($sql);
 if(mysql_num_rows($res_jgv)>0) {
 	while($lig_jgv=mysql_fetch_object($res_jgv)) {
-		$invisibilite_groupe=$lig_jgv->domaine;
+		$invisibilite_groupe[]=$lig_jgv->domaine;
 	}
 }
 //================================
@@ -76,6 +76,10 @@ echo "\$reg_clazz[$key]=$value<br />";
 $mode = isset($_GET['mode']) ? $_GET['mode'] : (isset($_POST['mode']) ? $_POST["mode"] : null);
 if ($mode == null and $id_classe == null) {
 	$mode = "groupe";
+
+	if ((isset($current_group["classes"]["list"]))&&(count($current_group["classes"]["list"]) > 1)) {
+		$mode = "regroupement";
+	}
 } else if ($mode == null and $current_group) {
 	if (count($current_group["classes"]["list"]) > 1) {
 		$mode = "regroupement";

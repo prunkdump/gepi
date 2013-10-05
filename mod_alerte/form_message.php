@@ -38,7 +38,17 @@ if ($resultat_session == 'c') {
 	header("Location: ../utilisateurs/mon_compte.php?change_mdp=yes");
 	die();
 } else if ($resultat_session == '0') {
-	header("Location: ../logout.php?auto=1");
+	if(!isset($_GET['mode_js'])) {
+		header("Location: ../logout.php?auto=1");
+	}
+	die();
+}
+
+if (($_SESSION['statut']=='eleve')||($_SESSION['statut']=='responsable')) {
+	// Précaution pour éviter une désactivation de compte.
+	// Cas vécu: Un professeur fait une démonstration à un élève qui dit "Gepi, ça ne marche pas".
+	//           il ouvre une session dans un onglet, mais sans refermer un onglet prof
+	//           Les tests de présence de nouveau message dans l'onglet prof finissent par désactiver le compte élève
 	die();
 }
 
@@ -59,7 +69,10 @@ statut='';";
 $insert=mysql_query($sql);
 }
 
-if (!checkAccess()) {
+// Pour éviter des blagues avec le plugin change_compte (sinon les comptes 'autre' sont désactivés en quelques secondes)
+//if (!checkAccess()) {
+//if ((!checkAccess())&&($_SESSION['statut']!='autre')) {
+if (($_SESSION['statut']!='autre')&&(!checkAccess())) {
 	// Si in reste sur une page sans se déconnecter, on n'envoie pas, en fin de session, de redir, ni de message par mail du type:
 	/*
 	** Alerte automatique sécurité Gepi **
