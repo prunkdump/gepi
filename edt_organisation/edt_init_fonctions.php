@@ -573,10 +573,12 @@ function enregistreCoursCsv2($jour, $creneau, $classe, $matiere, $prof, $salle, 
 
 		}else{
 
-			$groupe_e = renvoiConcordances($regroupement, 7);
+		        //!!! pour le regroupement il faut ajouter la matiere
+			$groupe_e = renvoiConcordances($matiere_e.'_'.$regroupement, 7);
+			//echo "groupe regroupement : ".$matiere_e.'_'.$regroupement."<br />";
 			//echo "\$groupe_e=$groupe_e<br />";
 
-			if ($groupe_e == 'erreur') {
+			if ($groupe_e == 'erreur' OR $groupe_e == 'inc' ) {
 				$regrp = '';
 				$groupe_e = renvoiIdGroupe($prof_e, $classe_e, $matiere_e, $regrp, $groupe, 'csv2');
 			}
@@ -610,9 +612,8 @@ function enregistreCoursCsv2($jour, $creneau, $classe, $matiere, $prof, $salle, 
 							id_aid = '".$id_aid_courant."' AND
 							id_salle = '".$salle_e."' AND
 							jour_semaine = '".$jour_e."' AND
-							id_definie_periode = '".$creneau_e."' AND
-							duree = '".$duree_e."' AND
-							heuredeb_dec = '".$heuredeb_dec."' AND
+							id_definie_periode + heuredeb_dec <= ".$creneau_e." + ".$heuredeb_dec." AND
+							id_definie_periode + heuredeb_dec + 0.5*duree >= ".$creneau_e." + ".$heuredeb_dec." + 0.5 * ".$duree_e." AND
 							id_calendrier = '0' AND
 							modif_edt = '0' AND
 							login_prof = '".$prof_e."';";
@@ -622,9 +623,8 @@ function enregistreCoursCsv2($jour, $creneau, $classe, $matiere, $prof, $salle, 
 							id_groupe = '".$groupe_e."' AND
 							id_salle = '".$salle_e."' AND
 							jour_semaine = '".$jour_e."' AND
-							id_definie_periode = '".$creneau_e."' AND
-							duree = '".$duree_e."' AND
-							heuredeb_dec = '".$heuredeb_dec."' AND
+							id_definie_periode + heuredeb_dec <= ".$creneau_e." + ".$heuredeb_dec." AND
+							id_definie_periode + heuredeb_dec + 0.5*duree >= ".$creneau_e." + ".$heuredeb_dec." + 0.5 * ".$duree_e." AND
 							id_calendrier = '0' AND
 							modif_edt = '0' AND
 							login_prof = '".$prof_e."';";
