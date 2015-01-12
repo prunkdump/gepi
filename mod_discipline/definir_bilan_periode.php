@@ -58,6 +58,8 @@ if(!getSettingAOui('active_mod_discipline')) {
 
 require('sanctions_func_lib.php');
 
+//debug_var();
+
 $msg="";
 
 $suppr_type_avertissement = isset($_POST['suppr_type_avertissement']) ? $_POST['suppr_type_avertissement'] : NULL;
@@ -96,24 +98,32 @@ if ((isset($avertissement_nom_court))&&($avertissement_nom_court!='')&&(isset($a
 
 	$tab_type_avertissement_fin_periode=get_tab_type_avertissement();
 
-	for($loop=0;$loop<count($tab_type_avertissement_fin_periode['cpt']);$loop++) {
-		if($tab_type_avertissement_fin_periode['cpt'][$loop]['nom_court']==$avertissement_nom_court) {
-			$msg.="Le nom court de  l'".$mod_disc_terme_avertissement_fin_periode." proposé '$avertissement_nom_court' existe déjà.<br />\n";
+	$temoin_deja=0;
+	if(isset($tab_type_avertissement_fin_periode['cpt'])) {
+		for($loop=0;$loop<count($tab_type_avertissement_fin_periode['cpt']);$loop++) {
+			if($tab_type_avertissement_fin_periode['cpt'][$loop]['nom_court']==$avertissement_nom_court) {
+				$msg.="Le nom court de l'".$mod_disc_terme_avertissement_fin_periode." proposé '$avertissement_nom_court' existe déjà.<br />\n";
+				$temoin_deja++;
+				break;
+			}
+			elseif($tab_type_avertissement_fin_periode['cpt'][$loop]['nom_complet']==$avertissement_nom_complet) {
+				$msg.="Le nom complet de l'".$mod_disc_terme_avertissement_fin_periode." proposé '$avertissement_nom_complet' existe déjà.<br />\n";
+				$temoin_deja++;
+				break;
+			}
 		}
-		elseif($tab_type_avertissement_fin_periode['cpt'][$loop]['nom_complet']==$avertissement_nom_complet) {
-			$msg.="Le nom complet de  l'".$mod_disc_terme_avertissement_fin_periode." proposé '$avertissement_nom_complet' existe déjà.<br />\n";
+	}
+
+	if($temoin_deja==0) {
+		$sql="INSERT INTO s_types_avertissements SET nom_court='$avertissement_nom_court',
+										nom_complet='$avertissement_nom_complet'
+										;";
+		$res=mysqli_query($GLOBALS["mysqli"], $sql);
+		if(!$res) {
+			$msg.="ERREUR lors de l'ajout d'".$mod_disc_terme_avertissement_fin_periode.".<br />\n";
 		}
 		else {
-			$sql="INSERT INTO s_types_avertissements SET nom_court='$avertissement_nom_court',
-											nom_complet='$avertissement_nom_complet'
-											;";
-			$res=mysqli_query($GLOBALS["mysqli"], $sql);
-			if(!$res) {
-				$msg.="ERREUR lors de l'ajout d'".$mod_disc_terme_avertissement_fin_periode.".<br />\n";
-			}
-			else {
-				$msg.="Ajout d'".$mod_disc_terme_avertissement_fin_periode." effectué.<br />\n";
-			}
+			$msg.="Ajout d'".$mod_disc_terme_avertissement_fin_periode." effectué.<br />\n";
 		}
 	}
 }
@@ -161,6 +171,17 @@ if(mysqli_num_rows($test)==0) {
 
 echo "<p class='bold'><a href='index.php'>Retour</a>";
 echo "</p>\n";
+
+if(getSettingValue('mod_disc_acces_avertissements')=="n") {
+	echo "<p style='color:red'>L'accès à la saisie des \"".$mod_disc_terme_avertissement_fin_periode."\" a été désactivé dans le ";
+	if($_SESSION['statut']=='administrateur') {
+		echo "<a href='discipline_admin.php' target='_blank'>paramétrage du module Discipline</a>";
+	}
+	else {
+		echo "paramétrage du module Discipline";
+	}
+	echo ".<br />Contactez un administrateur si vous pensez que c'est une erreur.</p>";
+}
 
 echo "<form name='formulaire' action='".$_SERVER['PHP_SELF']."' method='post'>
 	<fieldset id='infosPerso' style='border: 1px solid grey; background-image: url(\"../images/background/opacite50.png\");'>

@@ -23,12 +23,19 @@ $delais_affichage_infobulle=500;
 // Familles de sanctions:
 $types_autorises=array('exclusion', 'retenue', 'travail', 'autre');
 
+$discipline_droits_mkdir=getSettingValue('discipline_droits_mkdir');
+
 $dossier_documents_discipline="documents/discipline";
 if(((isset($multisite))&&($multisite=='y'))||(getSettingValue('multisite')=='y')) {
 	if(isset($_COOKIE['RNE'])) {
 		$dossier_documents_discipline.="_".$_COOKIE['RNE'];
 		if(!file_exists("../$dossier_documents_discipline")) {
-			@mkdir("../$dossier_documents_discipline",0770);
+			if($discipline_droits_mkdir=="") {
+				@mkdir("../$dossier_documents_discipline",0770);
+			}
+			else {
+				@mkdir("../$dossier_documents_discipline");
+			}
 		}
 	}
 }
@@ -719,7 +726,7 @@ function tab_mod_discipline($ele_login,$mode,$date_debut,$date_fin, $restreindre
 			$retour.="<br />\n";
 
 			$retour.="<span style='font-size:small;'>".u_p_nom($lig->declarant)."</span>";
-			
+
 			$zone_de_commentaire = $lig->commentaire;
 
 			$retour.="</td>\n";
@@ -971,8 +978,10 @@ function tab_mod_discipline($ele_login,$mode,$date_debut,$date_fin, $restreindre
 				
 				// Ajout Eric de la zone de commentaire
 				//affichage du commentaire
-				if ($zone_de_commentaire !="") {
-				$retour .=  "<p style='text-align:left;'><b>Commentaires sur l'".$mod_disc_terme_incident."&nbsp;:&nbsp;</b></br></br>$zone_de_commentaire</p>";	
+				if(($_SESSION['statut']!='eleve')&&($_SESSION['statut']!='responsable')) {
+					if ($zone_de_commentaire !="") {
+						$retour .= "<p style='text-align:left;'><b>Commentaires sur l'".$mod_disc_terme_incident."&nbsp;:&nbsp;</b></br></br>$zone_de_commentaire</p>";
+					}
 				}
 			}
 
@@ -1030,7 +1039,7 @@ function tab_mod_discipline($ele_login,$mode,$date_debut,$date_fin, $restreindre
 			$retour.="</table>\n";
 		}
 		else {
-			$retour.="<p>Aucune mesure prise en qualité de responsable.</p>\n";
+			$retour.="<p>Aucun(e) ".$mod_disc_terme_sanction." en qualité de responsable.</p>\n";
 		}
 		$retour.="</div>\n";
 

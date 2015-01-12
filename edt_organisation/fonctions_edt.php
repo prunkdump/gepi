@@ -104,25 +104,44 @@ function RetrieveColumnWeek($tab_data, $index_box, $jour, $week) {
 //
 // =============================================================================
 function SwapContainers(&$tab_data, &$index_box, $jour) {
+
+	$tmp_tab=array_keys($tab_data[$jour]['type']);
+	$indice_max=max($tmp_tab);
+
 	$aux_tab = array();
 	$index_container1 = $index_box;
 	$index_container2 = $index_box+1;
-	while ($tab_data[$jour]['type'][$index_container2] != "conteneur") {
-		$index_container2++;	
+	//while ($tab_data[$jour]['type'][$index_container2] != "conteneur") {
+	while ($index_container2<=$indice_max) {
+		if(isset($tab_data[$jour]['type'][$index_container2])) {
+			if($tab_data[$jour]['type'][$index_container2] == "conteneur") {
+				break;
+			}
+		}
+		$index_container2++;
 	}
+
 	$index = $index_container1;
 	$index_destination = 0;
-	while ($tab_data[$jour]['type'][$index] != "fin_conteneur") {
-		RemplirBox($tab_data[$jour]['elapse_time'][$index],
-					$aux_tab[$jour], 
-					$index_destination, 
-					$tab_data[$jour]['type'][$index],
-					$tab_data[$jour]['id_creneau'][$index],
-					$tab_data[$jour]['id_groupe'][$index],
-					$tab_data[$jour]['id_cours'][$index],
-					$tab_data[$jour]['duree'][$index],
-					$tab_data[$jour]['couleur'][$index],
-					$tab_data[$jour]['contenu'][$index]);
+	//while ($tab_data[$jour]['type'][$index] != "fin_conteneur") {
+	while ($index<=$indice_max) {
+		if(isset($tab_data[$jour]['type'][$index])) {
+			if($tab_data[$jour]['type'][$index] != "fin_conteneur") {
+				RemplirBox($tab_data[$jour]['elapse_time'][$index],
+							$aux_tab[$jour], 
+							$index_destination, 
+							$tab_data[$jour]['type'][$index],
+							$tab_data[$jour]['id_creneau'][$index],
+							$tab_data[$jour]['id_groupe'][$index],
+							$tab_data[$jour]['id_cours'][$index],
+							$tab_data[$jour]['duree'][$index],
+							$tab_data[$jour]['couleur'][$index],
+							$tab_data[$jour]['contenu'][$index]);
+			}
+			else {
+				break;
+			}
+		}
 		$index++;
 	}
 	RemplirBox($tab_data[$jour]['elapse_time'][$index],
@@ -137,23 +156,46 @@ function SwapContainers(&$tab_data, &$index_box, $jour) {
 				$tab_data[$jour]['contenu'][$index]);
 
 	// =========================================
+	// 20141208
+	/*
+	echo "\$tab_data[$jour]['type']:<pre>";
+	print_r($tab_data[$jour]['type']);
+	echo "</pre>";
+	*/
+
+	/*
+	echo "\$tab_data[$jour]:<pre>";
+	print_r($tab_data[$jour]);
+	echo "</pre>";
+	*/
+
 	$index = $index_container2;
 	$index_destination = $index_container1;
-	while ($tab_data[$jour]['type'][$index] != "fin_conteneur") {
-
-		RemplirBox($tab_data[$jour]['elapse_time'][$index],
-					$tab_data[$jour], 
-					$index_destination, 
-					$tab_data[$jour]['type'][$index],
-					$tab_data[$jour]['id_creneau'][$index],
-					$tab_data[$jour]['id_groupe'][$index],
-					$tab_data[$jour]['id_cours'][$index],
-					$tab_data[$jour]['duree'][$index],
-					$tab_data[$jour]['couleur'][$index],
-					$tab_data[$jour]['contenu'][$index]);
+	//while ($tab_data[$jour]['type'][$index] != "fin_conteneur") {
+	//while ((isset($tab_data[$jour]['type'][$index]))&&($tab_data[$jour]['type'][$index] != "fin_conteneur")) {
+	while ($index<=$indice_max) {
+		if(isset($tab_data[$jour]['type'][$index])) {
+			if($tab_data[$jour]['type'][$index] != "fin_conteneur") {
+				RemplirBox($tab_data[$jour]['elapse_time'][$index],
+						$tab_data[$jour], 
+						$index_destination, 
+						$tab_data[$jour]['type'][$index],
+						$tab_data[$jour]['id_creneau'][$index],
+						$tab_data[$jour]['id_groupe'][$index],
+						$tab_data[$jour]['id_cours'][$index],
+						$tab_data[$jour]['duree'][$index],
+						$tab_data[$jour]['couleur'][$index],
+						$tab_data[$jour]['contenu'][$index]);
+			}
+			else {
+				break;
+			}
+		}
 		$index++;
 	}
-	RemplirBox($tab_data[$jour]['elapse_time'][$index],
+
+	if(isset($tab_data[$jour]['type'][$index])) {
+		RemplirBox($tab_data[$jour]['elapse_time'][$index],
 				$tab_data[$jour], 
 				$index_destination, 
 				$tab_data[$jour]['type'][$index],
@@ -163,22 +205,30 @@ function SwapContainers(&$tab_data, &$index_box, $jour) {
 				$tab_data[$jour]['duree'][$index],
 				$tab_data[$jour]['couleur'][$index],
 				$tab_data[$jour]['contenu'][$index]);	
+	}
 
-				
 	// =========================================
 	$index = 0;
 
-	while ($aux_tab[$jour]['type'][$index] != "fin_conteneur") {
-		RemplirBox($aux_tab[$jour]['elapse_time'][$index],
-					$tab_data[$jour], 
-					$index_destination, 
-					$aux_tab[$jour]['type'][$index],
-					$aux_tab[$jour]['id_creneau'][$index],
-					$aux_tab[$jour]['id_groupe'][$index],
-					$aux_tab[$jour]['id_cours'][$index],
-					$aux_tab[$jour]['duree'][$index],
-					$aux_tab[$jour]['couleur'][$index],
-					$aux_tab[$jour]['contenu'][$index]);
+	//while ($aux_tab[$jour]['type'][$index] != "fin_conteneur") {
+	while ($index<=$indice_max) {
+		if(isset($aux_tab[$jour]['type'][$index])) {
+			if($aux_tab[$jour]['type'][$index] != "fin_conteneur") {
+				RemplirBox($aux_tab[$jour]['elapse_time'][$index],
+						$tab_data[$jour], 
+						$index_destination, 
+						$aux_tab[$jour]['type'][$index],
+						$aux_tab[$jour]['id_creneau'][$index],
+						$aux_tab[$jour]['id_groupe'][$index],
+						$aux_tab[$jour]['id_cours'][$index],
+						$aux_tab[$jour]['duree'][$index],
+						$aux_tab[$jour]['couleur'][$index],
+						$aux_tab[$jour]['contenu'][$index]);
+			}
+			else {
+				break;
+			}
+		}
 		$index++;
 	}
 	RemplirBox($aux_tab[$jour]['elapse_time'][$index],
@@ -939,14 +989,14 @@ function ContenuCreneau($id_creneaux, $jour_semaine, $type_edt, $enseignement, $
 	}
 
 
-	if(($login_prof_contenu_creneaux_courant!="")&&(acces_edt_prof())) {
+	if(($contenu_creneaux_edt_avec_span_title!="n")&&($login_prof_contenu_creneaux_courant!="")&&(acces_edt_prof())) {
 		$ChaineNomProf="<a href='../edt_organisation/index_edt.php?login_edt=".$login_prof_contenu_creneaux_courant."&amp;type_edt_2=prof' title=\"Consulter l'emploi du temps de ".$rep_nom_prof['nom']."\" style='color:black;'>".$rep_nom_prof['nom']."</a>";
 	}
 	else {
 		$ChaineNomProf=$rep_nom_prof['nom'];
 	}
 
-	if((acces_edt_prof())&&(acces_edt_classe())) {
+	if(($contenu_creneaux_edt_avec_span_title!="n")&&(acces_edt_prof())&&(acces_edt_classe())) {
 		$ChaineSalle="<a href='../edt_organisation/index_edt.php?visioedt=salle1&amp;login_edt=".$rep_id_salle['id_salle']."&amp;type_edt_2=salle' title=\"Consulter l'emploi du temps de la salle ".$rep_salle."\" style='color:black;'>".$rep_salle."</a>";
 	}
 	else {
