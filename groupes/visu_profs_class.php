@@ -70,7 +70,8 @@ if((isset($id_classe))&&(is_numeric($id_classe))) {
 	}
 	// On vérifie les droits donnés par l'administrateur
 	if((getSettingValue("GepiAccesVisuToutesEquipCpe") == "yes") AND $_SESSION['statut']=='cpe'){
-		echo '<p style="font-size: 0.7em; color: green;">L\'administrateur vous a donné l\'accès à toutes les classes.</p>';
+		//echo '<p style="font-size: 0.7em; color: green;">L\'administrateur vous a donné l\'accès à toutes les classes.</p>';
+		$acces_classe="y";
 	}elseif($_SESSION['statut']=='cpe'){
 		$test_cpe_classe = sql_count(sql_query("SELECT e_login FROM j_eleves_cpe jec,j_eleves_classes jecl WHERE jec.cpe_login = '".$_SESSION['login']."' AND jec.e_login=jecl.login AND jecl.id_classe='$id_classe'"));
 		if($test_cpe_classe==0){
@@ -523,7 +524,7 @@ if(isset($id_classe)){
 		<td>";
 
 				echo "<a href='javascript:ouvre_popup2(\"".$tab_enseignements[$i]['id_groupe']."\",\"$id_classe\", \"".($loop+1)."\");' style='font-weight:bold' title=\"";
-				if($tab_enseignements[$i]['nb_class_grp']>1) {
+				if((isset($tab_enseignements[$i]['nb_class_grp']))&&($tab_enseignements[$i]['nb_class_grp']>1)) {
 					echo "Dans ce groupe de ".$tab_enseignements[$i]['nb_tous_eleves_grp'][$loop+1]." élèves, ".$tab_enseignements[$i]['nb_eleves'][$loop+1]." élèves sont en ".$classe['classe'].".\n";
 				}
 				echo "Afficher un listing de l'enseignement\"> ".$tab_enseignements[$i]['nb_eleves'][$loop+1]." ";
